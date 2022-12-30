@@ -112,16 +112,24 @@ fn scan(path: &String, parent: Option<&String>, dry_run: bool) {
 }
 
 fn sort<'a, 'b>(a: &'a Result<DirEntry, Error>, b: &'b Result<DirEntry, Error>) -> Ordering {
+    // Get the paths for both DirEntries
     let path_a = a.as_ref().unwrap().path();
     let path_b = b.as_ref().unwrap().path();
-    
+
+    // If both paths are directories, compare the emptiness of the directories
     if path_a.is_dir() && path_b.is_dir() {
-        if fs::read_dir(path_a).unwrap().into_iter().collect::<Vec<Result<DirEntry, Error>>>().is_empty() {
+        let is_empty_a = fs::read_dir(path_a).unwrap().into_iter().next().is_none();
+        let is_empty_b = fs::read_dir(path_b).unwrap().into_iter().next().is_none();
+
+        if is_empty_a {
             return Ordering::Less;
-        } else {
+        } else if is_empty_b {
             return Ordering::Greater;
+        } else {
+            return Ordering::Equal;
         }
     }
-    
+
+    // If not both directories, return Equal
     Ordering::Equal
 }
